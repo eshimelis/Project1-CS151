@@ -161,72 +161,51 @@ def uniformCostSearch(problem):
     # create/initiate fringe and empty set
     explored = []
 
-    fringe = util.PriorityQueue()
-    fringe.push(problem.getStartState(), 0)
+    frontier = util.PriorityQueue()
+    frontier.push(problem.getStartState(), 0)
 
-    path = util.Stack()
-    path.push([])
-
-    cost = util.Stack()
-    cost.push(0)
+    path = {}
+    cost = {}
 
     while True:
 
-        if fringe.isEmpty():
+        if frontier.isEmpty():
             raise ValueError('Failure: fringe is empty.')
 
-        currentState = fringe.pop()
-        currentPathCost = cost.pop()
-        currentPath = path.pop()
+        currentState = frontier.pop()
 
-        # currentInstructions = directions.pop()
-        # stepCost = cost.pop()
+        if currentState in path.keys():
+            currentPathCost = cost[currentState]
+            currentPath = path[currentState]
+        else:
+            currentPathCost = 0
+            currentPath = []
 
         if problem.isGoalState(currentState):
-            print 'found goal!'
-
-            while not fringe.isEmpty():
-                print fringe.pop()
-
+            print 'Frontier: ', frontier
+            print 'Path Cost: ', currentPathCost
             return currentPath
-            # return 'hello'
-            # return currentInstructions
 
-        explored.append(currentState)
-
-        # print currentState
+        if currentState not in explored:
+            explored.append(currentState)
 
         for successorState in problem.getSuccessors(currentState):
+
+            [successor, action, stepCost] = successorState
+            priority = currentPathCost + stepCost
+
             if successorState not in explored:
-                # print childState
-                priority = currentPathCost + successorState[2]
-                cost.push(priority)
-                fringe.update(successorState[0], priority)
-                path.push(currentPath + [successorState[1]])
+                frontier.push(successor, priority)
 
+                # update action and cost
+                path[successor] = currentPath + [action]
+                cost[successor] = priority
             else:
-                priority = currentPathCost + successorState[2]
-                fringe.update(successorState[0], priority)
-                path.update(currentPath + [successorState[1]])
-                cost.push(priority)
+                frontier.update(successor, priority)
 
-
-
-        #
-        #         fringe.push()
-        #
-        # if currentState not in explored:
-        #
-        #
-        #     # sort successors by cost function
-        #     successors = problem.getSuccessors(currentState)
-        #     successors.sort(key = lambda state: state[2])
-        #
-        #     for successorState in successors:
-        #         if successorState not in explored:
-        #             fringe.push(successorState[0])
-        #             directions.push(currentInstructions + [successorState[1]])
-        #             cost.push(stepCost + successorState[2])
+                # update action and cost
+                path[successor] = currentPath + [action]
+                cost[successor] = priority
 
 
 
