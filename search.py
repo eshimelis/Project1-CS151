@@ -89,20 +89,17 @@ def depthFirstSearch(problem):
 
     # create/initiate fringe and empty set
     fringe = util.Stack()
-    fringe.push(problem.getStartState())
+    fringe.push((problem.getStartState(), []))
 
     explored = []
-
-    directions = util.Stack()
-    directions.push([])
 
     while True:
 
         if fringe.isEmpty():
             raise ValueError('Failure: fringe is empty.')
 
-        currentState = fringe.pop()
-        currentInstructions = directions.pop()
+        # extract current state and path
+        (currentState, currentInstructions) = fringe.pop()
 
         if problem.isGoalState(currentState):
             return currentInstructions
@@ -110,38 +107,35 @@ def depthFirstSearch(problem):
         if currentState not in explored:
             explored.append(currentState)
 
+            # add successors to the stack
             for successorState in problem.getSuccessors(currentState):
                 if successorState not in explored:
-                    fringe.push(successorState[0])
-                    directions.push(currentInstructions + [successorState[1]])
+                    fringe.push((successorState[0], currentInstructions + [successorState[1]]))
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
 
     # create/initiate frontier and empty set
-    explored = []
-
     frontier = util.Queue()
     frontier.push([problem.getStartState(), [], 0])
+
+    explored = []
 
     while True:
 
         if frontier.isEmpty():
             raise ValueError('Failure: fringe is empty.')
 
-        node = frontier.pop()
-
-        currentPosition = node[0]
-        currentAction = node[1]
-        stepCost = node[2]
+        (currentPosition, currentAction, stepCost) = frontier.pop()
 
         if problem.isGoalState(currentPosition):
             return currentAction
 
+        # add successors to the fringe
         if currentPosition not in explored:
             explored.append(currentPosition)
 
-            # sort successors by cost function
+            # sort successors by step cost
             successors = problem.getSuccessors(currentPosition)
             successors.sort(key = lambda state: state[2])
 
@@ -152,61 +146,41 @@ def breadthFirstSearch(problem):
                     cost = stepCost + successorState[2]
 
                     frontier.push([state, actions, cost])
-                    # directions.push(currentInstructions + [successorState[1]])
-                    # cost.push(stepCost + successorState[2])
+
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
 
     # create/initiate fringe and empty set
-    explored = []
-
     frontier = util.PriorityQueue()
-    frontier.push(problem.getStartState(), 0)
+    frontier.push((problem.getStartState(), [], 0), 0)
 
-    path = {}
-    cost = {}
+    explored = []
 
     while True:
 
         if frontier.isEmpty():
             raise ValueError('Failure: fringe is empty.')
 
-        currentState = frontier.pop()
+        (currentState, currentPath, currentPathCost) = frontier.pop()
 
-        if currentState in path.keys():
-            currentPathCost = cost[currentState]
-            currentPath = path[currentState]
-        else:
-            currentPathCost = 0
-            currentPath = []
-
+        # check if goal
         if problem.isGoalState(currentState):
-            print 'Frontier: ', frontier
-            print 'Path Cost: ', currentPathCost
             return currentPath
 
+        # add to list of explored states
         if currentState not in explored:
             explored.append(currentState)
 
-        for successorState in problem.getSuccessors(currentState):
+            # iterate through successors
+            for successorState in problem.getSuccessors(currentState):
 
-            [successor, action, stepCost] = successorState
-            priority = currentPathCost + stepCost
+                [successor, action, stepCost] = successorState
 
-            if successorState not in explored:
-                frontier.push(successor, priority)
-
-                # update action and cost
-                path[successor] = currentPath + [action]
-                cost[successor] = priority
-            else:
-                frontier.update(successor, priority)
-
-                # update action and cost
-                path[successor] = currentPath + [action]
-                cost[successor] = priority
-
+                if successor not in explored:
+                    # calculate new priorty and update node in priority queue
+                    priority = currentPathCost + stepCost
+                    frontier.push((successor, currentPath + [action], currentPathCost + stepCost), priority)
 
 
 def nullHeuristic(state, problem=None):
@@ -218,8 +192,38 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    # create/initiate fringe and empty set
+    frontier = util.PriorityQueue()
+    frontier.push((problem.getStartState(), [], 0), heuristic(problem.getStartState(), problem))
+
+    explored = []
+
+    while True:
+
+        if frontier.isEmpty():
+            raise ValueError('Failure: fringe is empty.')
+
+        (currentState, currentPath, currentPathCost) = frontier.pop()
+
+        # check if goal
+        if problem.isGoalState(currentState):
+            return currentPath
+
+        # add to list of explored states
+        if currentState not in explored:
+            explored.append(currentState)
+
+            # iterate through successors
+            for successorState in problem.getSuccessors(currentState):
+
+                [successor, action, stepCost] = successorState
+
+                if successor not in explored:
+                    # calculate new priorty and update node in priority queue
+                    priority = currentPathCost + stepCost
+                    frontier.push((successor, currentPath + [action], currentPathCost + stepCost), priority + heuristic(successor, problem))
+
 
 
 # Abbreviations
